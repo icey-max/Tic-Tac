@@ -6,6 +6,12 @@ middleLeft:null, middleCenter: null, middleRight:null,
 bottomLeft:null, bottomCenter:null, bottomRight:null,
 }
 
+const gameState = {
+    status:null,
+    winner:null,
+    history:[],
+}
+
 const boardConverted = Object.keys(gameBoard)
 
 function createBoard(size){
@@ -35,22 +41,25 @@ createBoard(3)
 
 const allBoxes = document.querySelectorAll('.box')
 
+
+
     allBoxes.forEach(element =>{
         element.addEventListener("click",(e) =>{
             const currentID = e.target.id;
-            e.target.appendChild(document.createElement("div")).innerHTML = "H"; // This creates the element Inside
             const getPosition = currentID[3]-1; // Get's the last char from the ID which is represented as a number here and substracts 1 so it matches array indexing
             const getNames = boardConverted[getPosition];
     
             // Now Access the Original Board and Write to It
     
-    
+            if(gameState.status === null){
             if(gameBoard[getNames] === null){
+                e.target.appendChild(document.createElement("div")).innerHTML = "H"; // This creates the element Inside
                 gameBoard[getNames] = "human";
                 console.log(`${gameBoard[getNames]} on ${boardConverted[getPosition]}`);
                 boardInConsole()
+                checkGame()
+
                 getComputerInput()
-                  checkGame()
     
             }
             else{
@@ -58,9 +67,11 @@ const allBoxes = document.querySelectorAll('.box')
             }
     
             
+        }
 
-
-
+            else{
+                console.log("Game's Over Loser") // Needs feature for announcer
+            }
 
     
     
@@ -71,17 +82,13 @@ const allBoxes = document.querySelectorAll('.box')
     
         })
     })
+
+
+
+
+   
     
 function getUserInput(){
-    // let choice = prompt("Enter your position");
-
-    // if(gameBoard[choice] === null){
-    //     gameBoard[choice] = "human";
-
-    // }
-    // else{
-    //     console.log("Enter an unreserved space")
-    // }
 
     
 
@@ -95,27 +102,36 @@ function getComputerInput(){
 
     // Checks available positions and appends it to the list 
 
-    entr.forEach(element => {
+    if(gameState.status === null){
+        entr.forEach(element => {
 
-        const value = element[1]
-        const position = element[0]
-        if (value === null){
-            availablePositions.push(position)
+            const value = element[1]
+            const position = element[0]
+            if (value === null){
+                availablePositions.push(position)
+    
+            }
+        });
+    
+        const randomNumber = Math.floor(Math.random() * availablePositions.length);
+    
+        let choice = availablePositions[randomNumber];
+        const allBoxes = document.querySelectorAll('.box')
+        console.log(`Computer chose ${choice}`)
+        gameBoard[choice] = "computer";
+    
+    
+    
+    const toIndex = entr.findIndex(item => item[0] === choice);
+    
+    allBoxes[toIndex].appendChild(document.createElement("div")).innerHTML = "C"
+        checkGame()
+        boardInConsole()
+    }
 
-        }
-    });
-
-    const randomNumber = Math.floor(Math.random() * availablePositions.length);
-
-    let choice = availablePositions[randomNumber]
-    console.log(`Computer chose ${choice}`)
-    gameBoard[choice] = "computer";
-
-
-
-console.log(entr.indexOf(choice))
-    checkGame()
-    boardInConsole()
+else{
+    console.log("Computer Already Lost")
+}
 
     
 }
@@ -168,10 +184,26 @@ console.log(rez);
 
 }
 
-function refreshBoard(){
+function animatePattern(pattern){
+
+    const allBoxes = document.querySelectorAll('.box');
+    const toList = Object.keys(gameBoard);
+    console.log(`${pattern} HERE`);
+    // const history = [];
+
+    // pattern.forEach(element =>{
+    //     const foundIndex = toList.findIndex(item => item === element)
+    //    history.push(foundIndex)
+        
+
+    // })
+
+    // history.forEach(index => {
+    //     allBoxes[index].className = "box-lined"
+        
+    // });
 
 }
-
 function checkGame(){
 /* toList.forEach(element =>{
 
@@ -312,7 +344,7 @@ const winningPatterns = {
     column2:{
         topCenter:gameBoard.topCenter, middleCenter:gameBoard.middleCenter, bottomCenter:gameBoard.bottomCenter,   
     },
-    column1:{
+    column3:{
         topRight:gameBoard.topRight, middleRight:gameBoard.middleRight, bottomRight:gameBoard.bottomRight,   
     },
     diagonal1:{
@@ -326,6 +358,7 @@ const winningPatterns = {
 }
 
 const toList = Object.keys(winningPatterns)
+const pattern = []
 
 
 toList.forEach(element => {
@@ -337,23 +370,106 @@ toList.forEach(element => {
 
     if(allHuman === true){
         console.log(`Win for human on ${element}`)
+        gameState.status = "finished"
+        gameState.winner = "human"
+        gameState.history.push("human")
+        startCountdown();
+
+        const accessPaternWithName = Object.keys(winningPatterns[element])
+
+        accessPaternWithName.forEach(element =>{
+            pattern.push(element)
+
+        })
+
+
+
+        animatePattern(pattern)
     }
     else if(allComputer === true){
         console.log(`Win for Computer on ${element}`)
+         gameState.status = "finished";
+         gameState.winner = "computer"
+         gameState.history.push("computer")
+         startCountdown();
+
     }
 
-    // else if(allNull === true){
-    //  console.log(`Null on ${element}`)
-    // }
-
+  
 })
-
 }
 
 
 
 
+function startCountdown() {
+    const announcerHTML = document.querySelector('#announcerText')
+
+    let timeLeft = 5; // Total seconds for countdown (adjust as needed)
+    let countdownTimer;
+    
+    
+    
+    // Start the countdown
+    // Set initial text
+    announcerHTML.innerHTML = `Game Reset in ${timeLeft}s`;
+    
+    // Update display every second
+    countdownTimer = setInterval(() => {
+      timeLeft--;
+      
+      // Update the UI
+      announcerHTML.innerHTML = `Time reset in ${timeLeft}s`;
+      
+      // When countdown reaches zero
+      if (timeLeft <= 0) {
+        clearInterval(countdownTimer);
+        announcerHTML.innerHTML = 'Time reset!';
+        refreshGame()
+        
+        // Optional: Call your actual timeout function here
+        // yourTimeoutFunction();
+      }
+    }, 1000);
+  }
+
+function refreshGame(){
+    const announcerHTML = document.querySelector('#announcerText')
+    announcerHTML.innerHTML = `Waiting for game to start...`
+    const boardList = Object.keys(gameBoard)
+    const gameStateList = Object.keys(gameState);
+
+    boardList.forEach(element => {
+        gameBoard[element] = null
+    });
+    gameStateList.forEach(element => {
+        if(element != "history")
+            gameState[element] = null
+    });
 
 
+    // Refresh UI
 
+    const allBoxes = document.querySelectorAll('.box')
+
+    allBoxes.forEach(element =>{
+        element.innerHTML = ``
+    })
+
+    addHistory()
+}
+
+function addHistory(){
+    const historyHTML = document.querySelector('#gameHistory');
+
+    gameState.history.forEach(element => {
+        html = `<div>Round Won for ${element} </div>`
+        historyHTML.insertAdjacentHTML('beforeend',html )
+//    const toIndex = entr.findIndex(item => item[0] === choice);
+
+    });
+
+}
+
+console.log(gameState.history)
 
